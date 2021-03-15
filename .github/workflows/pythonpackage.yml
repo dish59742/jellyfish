@@ -76,6 +76,40 @@ jobs:
       with:
         name: artifacts
         path: dist/*
+        
+  manylinux-arm64:
+    name: "${{ matrix.PYTHON.ABI_VERSION }} manylinux2014-aarch64"
+    runs-on: ubuntu-latest
+    strategy:
+       matrix:
+        python-version: ['3.6', '3.7', '3.8', '3.9']
+    steps:
+      - uses: actions/checkout@v2
+      - name: Checkout submodules
+        run: |
+         git submodule init
+         git submodule updat
+      - run: |
+          docker run --rm --privileged hypriot/qemu-register
+      - uses: docker://quay.io/pypa/manylinux2014_aarch64
+        # The weird pip cache nonsense below is due to docker ownership issues. We want
+        # a cache because otherwise we end up building cffi twice.
+        with:
+          args: |
+              bash -c "set -xe;
+              mkdir -p /github/home/.cache/pip;
+              chown -R $(whoami) /github/home/.cache;
+              /opt/python/${{ matrix.PYTHON.VERSION }}/bin/python -m venv .venv;
+              .venv/bin/pip install -U pip build;
+              ../.venv/bin/python python -m build;
+              auditwheel repair dist/jellyfish*.whl -w wheelhouse/;
+              .venv/bin/pip install jellyfish --no-index -f wheelhouse/;"
+      - run: mkdir jellyfish-wheelhouse
+      - run: sudo mv wheelhouse/jellyfish*.whl jellyfish-wheelhouse/
+      - uses: actions/upload-artifact@v1
+        with:
+          name: "jellyfish-${{ github.event.inputs.version }}-manylinux2014-aarch64-${{ matrix.PYTHON.ABI_VERSION }}"
+          path: jellyfish-wheelhouse/
 
   publish:
     name: Publish release
