@@ -78,7 +78,7 @@ jobs:
         path: dist/*
         
   manylinux-arm64:
-    name: "${{ matrix.pyvver }} manylinux2014-aarch64"
+    name: "${{ matrix.pyver }} manylinux2014-aarch64"
     strategy:
       matrix:
         pyver: [cp36-cp36m, cp37-cp37m, cp38-cp38, cp39-cp39]
@@ -104,16 +104,16 @@ jobs:
       run: |
         docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} ${{ env.py }} -m pip install -U  pip build pytest
-    - name: Install dependencies linux or non pypy3
+    - name: Install dependencies
       run: |
             docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
             ${{ env.img }} \
-            bash -exc '${{ env.python }} -m pip install virtualenv && ${{ env.python }} -m venv .env && \
+            bash -exc '${{ env.py }} -m pip install virtualenv && ${{ env.py }} -m venv .env && \
             source .env/bin/activate && \
             python -m pip install --upgrade pip && \
             pip install -e . && \
             deactivate'
-    - name: Test with pytest windows-latest or pypy3
+    - name: Test with pytest
       run: |
           docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
             ${{ env.img }} \
