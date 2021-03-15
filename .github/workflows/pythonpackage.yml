@@ -79,37 +79,44 @@ jobs:
         
   manylinux-arm64:
     name: "${{ matrix.python-version }} manylinux2014-aarch64"
-    runs-on: ubuntu-latest
     strategy:
-       matrix:
-        python-version: [cp36-cp36m, cp37-cp37m, cp38-cp38, cp39-cp39]
+      matrix:
+        pyver: [cp36-cp36m, cp37-cp37m, cp38-cp38, cp39-cp39]
+        arch: [aarch64]
+      fail-fast: false
+    runs-on: ubuntu-latest
+    env:
+      py: /opt/python/${{ matrix.pyver }}/bin/python
+      img: quay.io/pypa/manylinux2014_${{ matrix.arch }}
     steps:
-      - uses: actions/checkout@v2
-      - name: Checkout submodules
-        run: |
-         git submodule init
-         git submodule update
-      - run: |
-          docker run --rm --privileged hypriot/qemu-register
-      - uses: docker://quay.io/pypa/manylinux2014_aarch64
-        # The weird pip cache nonsense below is due to docker ownership issues. We want
-        # a cache because otherwise we end up building cffi twice.
-        with:
-          args: |
-              bash -c "set -xe;
-              mkdir -p /github/home/.cache/pip;
-              chown -R $(whoami) /github/home/.cache;
-              /opt/python/${{ matrix.python-version }}/bin/python -m venv .venv;
-              .venv/bin/pip install -U pip build;
-              ../.venv/bin/python python -m build;
-              auditwheel repair dist/jellyfish*.whl -w wheelhouse/;
-              .venv/bin/pip install jellyfish --no-index -f wheelhouse/;"
-      - run: mkdir jellyfish-wheelhouse
-      - run: sudo mv wheelhouse/jellyfish*.whl jellyfish-wheelhouse/
-      - uses: actions/upload-artifact@v1
-        with:
-          name: "jellyfish-${{ github.event.inputs.version }}-manylinux2014-aarch64-${{ matrix.PYTHON.ABI_VERSION }}"
-          path: jellyfish-wheelhouse/
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Checkout submodules
+      run: |
+        git submodule init
+        git submodule update
+    - name: Set up QEMU
+      id: qemu
+      uses: docker/setup-qemu-action@v1
+    - name: Available platforms
+      run: echo ${{ steps.qemu.outputs.platforms }}
+    - name: Install tools
+      run: |
+        docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+          ${{ env.img }} ${{ env.py }} -m pip install -U setuptools wheel
+    - name: Make wheel
+      run: |
+        docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+          ${{ env.img }} ${{ env.py }} setup.py bdist_wheel
+    - name: Repair wheel wheel
+      run: |
+        docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+          ${{ env.img }} auditwheel repair dist/*.whl --wheel-dir wheelhouse/
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: dist
+        path: wheelhouse/*
 
   publish:
     name: Publish release
