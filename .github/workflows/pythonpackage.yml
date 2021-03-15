@@ -82,7 +82,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
        matrix:
-        python-version: ['3.6', '3.7', '3.8', '3.9']
+        python-version: [cp36-cp36m, cp37-cp37m, cp38-cp38, cp39-cp39]
     steps:
       - uses: actions/checkout@v2
       - name: Checkout submodules
@@ -99,7 +99,7 @@ jobs:
               bash -c "set -xe;
               mkdir -p /github/home/.cache/pip;
               chown -R $(whoami) /github/home/.cache;
-              /opt/python/${{ matrix.PYTHON.VERSION }}/bin/python -m venv .venv;
+              /opt/python/${{ matrix.python-version }}/bin/python -m venv .venv;
               .venv/bin/pip install -U pip build;
               ../.venv/bin/python python -m build;
               auditwheel repair dist/jellyfish*.whl -w wheelhouse/;
