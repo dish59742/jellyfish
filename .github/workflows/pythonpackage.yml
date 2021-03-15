@@ -104,12 +104,16 @@ jobs:
       run: |
         docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} ${{ env.py }} -m pip install -U  pip build pytest
-    - name: Install dependencies
+    - name: Install dependencies linux or non pypy3
       run: |
-        docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
-          ${{ env.img }} ${{ env.py }} -m pip install -e .
+            docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+            ${{ env.img }} \
+            bash -exc '${{ env.python }} -m pip install virtualenv && ${{ env.python }} -m venv .env && \
+            source .env/bin/activate && \
+            python -m pip install --upgrade pip && \
+            pip install -e . && \
+            deactivate'
     - name: Test with pytest windows-latest or pypy3
-      if : ${{ matrix.python-version != 'pypy3' && matrix.os != 'windows-latest' }}
       run: |
           docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
             ${{ env.img }} \
