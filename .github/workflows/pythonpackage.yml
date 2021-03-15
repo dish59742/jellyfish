@@ -77,8 +77,8 @@ jobs:
         name: artifacts
         path: dist/*
   
-  te-aarch64:
-    name: "${{ matrix.pyver }} manylinux2014-aarch64"
+  test-aarch64:
+    name: "Test ${{ matrix.pyver }} aarch64"
     strategy:
       matrix:
         pyver: [cp36-cp36m, cp37-cp37m, cp38-cp38, cp39-cp39]
@@ -122,7 +122,7 @@ jobs:
             deactivate'
             
   build-aarch64:
-    name: "${{ matrix.pyver }} manylinux2014-aarch64"
+    name: "Build on ${{ matrix.pyver }} aarch64"
     strategy:
       matrix:
         pyver: [cp36-cp36m, cp37-cp37m, cp38-cp38, cp39-cp39]
