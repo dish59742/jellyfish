@@ -78,7 +78,7 @@ jobs:
         path: dist/*
         
   manylinux-arm64:
-    name: "${{ matrix.python-version }} manylinux2014-aarch64"
+    name: "${{ matrix.pyvver }} manylinux2014-aarch64"
     strategy:
       matrix:
         pyver: [cp36-cp36m, cp37-cp37m, cp38-cp38, cp39-cp39]
@@ -103,7 +103,15 @@ jobs:
     - name: Install tools
       run: |
         docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
-          ${{ env.img }} ${{ env.py }} -m pip install -U  pip build
+          ${{ env.img }} ${{ env.py }} -m pip install -U  pip build pytest
+    - name: Install dependencies
+      run: |
+        docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+          ${{ env.img }} ${{ env.py }} -m pip install -e .
+    - name: Test
+      run: |
+        docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+          ${{ env.img }} pytest jellyfish/test.py
     - name: Make wheel
       run: |
         docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
