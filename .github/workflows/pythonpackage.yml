@@ -108,10 +108,16 @@ jobs:
       run: |
         docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} ${{ env.py }} -m pip install -e .
-    - name: Test
+    - name: Test with pytest windows-latest or pypy3
+      if : ${{ matrix.python-version != 'pypy3' && matrix.os != 'windows-latest' }}
       run: |
-        docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
-          ${{ env.img }} pytest jellyfish/test.py
+          docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+            ${{ env.img }} \
+            bash -exc '\
+            source .env/bin/activate && \
+            pip install pytest && \
+            pytest jellyfish/test.py && \
+            deactivate'
     - name: Make wheel
       run: |
         docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
